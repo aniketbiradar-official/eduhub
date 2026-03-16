@@ -4,12 +4,12 @@ import { getFirestore } from "firebase/firestore"
 import { getStorage } from "firebase/storage"
 
 const firebaseConfig = {
-  apiKey:            import.meta.env.VITE_API_KEY,
-  authDomain:        import.meta.env.VITE_AUTH_DOMAIN,
-  projectId:         import.meta.env.VITE_PROJECT_ID,
-  storageBucket:     import.meta.env.VITE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
-  appId:             import.meta.env.VITE_APP_ID,
+  apiKey: "AIzaSyCuB-h9wLXVO2qLjeoGNaGU3B3RXWlZ_KE",
+  authDomain: "eduhub-34f3e.firebaseapp.com",
+  projectId: "eduhub-34f3e",
+  storageBucket: "eduhub-34f3e.firebasestorage.app",
+  messagingSenderId: "419215619223",
+  appId: "1:419215619223:web:b1b089a5e05a53860ee5d2"
 }
 
 const app = initializeApp(firebaseConfig)
