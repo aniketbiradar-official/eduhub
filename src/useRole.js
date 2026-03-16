@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react'
-import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, onSnapshot, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
 import { db } from './firebase'
 
-// ROLE HIERARCHY
-// admin  → full access (manage users, delete anything, all CR powers)
-// cr     → contributor (upload notes, post announcements, manage timetable, CR panel)
-// student→ read-only (view & download everything)
-
 export function useRole(user) {
-  const [role, setRole]       = useState(null)   // null = loading
+  const [role, setRole]         = useState(null)
   const [userData, setUserData] = useState(null)
 
   useEffect(() => {
@@ -19,27 +14,44 @@ export function useRole(user) {
     const unsub = onSnapshot(userRef, async (snap) => {
       if (snap.exists()) {
         const data = snap.data()
+        // Document exists — always trust what's in Firestore
         setRole(data.role || 'student')
         setUserData(data)
-      } else {
-        // First login — create user document with 'student' role
-        const newUser = {
-          uid:         user.uid,
-          name:        user.displayName,
-          email:       user.email,
-          photoURL:    user.photoURL,
-          role:        'student',
-          createdAt:   serverTimestamp(),
-          lastLogin:   serverTimestamp(),
-        }
-        await setDoc(userRef, newUser)
-        setRole('student')
-        setUserData(newUser)
-      }
-    })
 
-    // Update lastLogin each session
-    setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch(() => {})
+        // Only update lastLogin, never touch the role
+        setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true }).catch(() => {})
+      } else {
+        // Document truly doesn't exist — create with student role
+        // But first double-check with a direct get to avoid race conditions
+        try {
+          const freshSnap = await getDoc(userRef)
+          if (freshSnap.exists()) {
+            const data = freshSnap.data()
+            setRole(data.role || 'student')
+            setUserData(data)
+          } else {
+            const newUser = {
+              uid:       user.uid,
+              name:      user.displayName,
+              email:     user.email,
+              photoURL:  user.photoURL,
+              role:      'student',
+              createdAt: serverTimestamp(),
+              lastLogin: serverTimestamp(),
+            }
+            await setDoc(userRef, newUser)
+            setRole('student')
+            setUserData(newUser)
+          }
+        } catch (err) {
+          console.error('useRole error:', err)
+          setRole('student')
+        }
+      }
+    }, (err) => {
+      console.error('onSnapshot error:', err)
+      setRole('student')
+    })
 
     return () => unsub()
   }, [user])
@@ -47,7 +59,6 @@ export function useRole(user) {
   return { role, userData }
 }
 
-// Helper: check if a role has a given permission
 export function can(role, action) {
   const permissions = {
     student: [
@@ -80,7 +91,6 @@ export function can(role, action) {
   return perms.includes(action)
 }
 
-// Role display helpers
 export const ROLE_LABELS = {
   admin:   'Admin',
   cr:      'Class Rep',
