@@ -6,6 +6,7 @@ import Home from './Home'
 import FileSystem from './FileSystem'
 import Announcements from './Announcements'
 import Timetable from './Timetable'
+import Planner from './Planner'
 import CRPanel from './CRPanel'
 import AdminPanel from './AdminPanel'
 
@@ -14,6 +15,7 @@ const NAV = [
   { id: 'files',         icon: '📁', label: 'File System',   permission: 'view_notes' },
   { id: 'announcements', icon: '📢', label: 'Announcements', permission: 'view_announcements' },
   { id: 'timetable',     icon: '🗓', label: 'Timetable',     permission: 'view_timetable' },
+  { id: 'planner',       icon: '🗂', label: 'Study Planner', permission: 'view_planner' },
 ]
 const CR_NAV    = [{ id: 'cr',    icon: '⚙️', label: 'CR Panel',    permission: 'manage_courses' }]
 const ADMIN_NAV = [{ id: 'admin', icon: '🛡️', label: 'Admin Panel',  permission: 'manage_users'  }]
@@ -158,6 +160,7 @@ export default function Dashboard({ user, role }) {
             {page==='files'         && (can(role,'view_notes')         ? <FileSystem user={user} role={role}/>     : <AccessDenied/>)}
             {page==='announcements' && (can(role,'view_announcements') ? <Announcements user={user} role={role}/> : <AccessDenied/>)}
             {page==='timetable'     && (can(role,'view_timetable')     ? <Timetable user={user} role={role}/>     : <AccessDenied/>)}
+            {page==='planner'       && (can(role,'view_planner')       ? <Planner user={user}/>                   : <AccessDenied/>)}
             {page==='cr'            && (can(role,'manage_courses')     ? <CRPanel user={user} role={role}/>       : <AccessDenied/>)}
             {page==='admin'         && (can(role,'manage_users')       ? <AdminPanel user={user} role={role}/>    : <AccessDenied/>)}
           </div>
