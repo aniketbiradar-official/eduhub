@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebase'
-import { can, ROLE_LABELS, ROLE_COLORS } from '../useRole'
+import { can, ROLE_LABELS, ROLE_COLORS, ROLE_ICONS } from '../useRole'
 import Home from './Home'
 import Notes from './Notes'
 import Announcements from './Announcements'
-import CRPanel from './CRPanel'
-import AdminPanel from './AdminPanel'
 import Syllabus from './Syllabus'
 import Timetable from './Timetable'
+import CRPanel from './CRPanel'
+import AdminPanel from './AdminPanel'
 
 const NAV = [
   { id: 'home',          icon: '⌂',  label: 'Dashboard',    permission: 'view_dashboard' },
@@ -17,8 +17,8 @@ const NAV = [
   { id: 'syllabus',      icon: '📋', label: 'Syllabus',      permission: 'view_syllabus' },
   { id: 'timetable',     icon: '🗓', label: 'Timetable',     permission: 'view_timetable' },
 ]
-const CR_NAV    = [{ id: 'cr',    icon: '⚙️', label: 'CR Panel',   permission: 'manage_courses' }]
-const ADMIN_NAV = [{ id: 'admin', icon: '🛡️', label: 'Admin Panel', permission: 'manage_users'  }]
+const CR_NAV    = [{ id: 'cr',    icon: '⚙️', label: 'CR Panel',    permission: 'manage_courses' }]
+const ADMIN_NAV = [{ id: 'admin', icon: '🛡️', label: 'Admin Panel',  permission: 'manage_users'  }]
 
 function AccessDenied() {
   return (
@@ -32,18 +32,23 @@ function AccessDenied() {
   )
 }
 
-export default function Dashboard({ user, role, userData }) {
+export default function Dashboard({ user, role }) {
   const [page, setActivePage] = useState('home')
   const [sideOpen, setSideOpen] = useState(false)
-  const setPage = (p) => { setActivePage(p); setSideOpen(false) }
-  const handleLogout = async () => { if (confirm('Sign out of EduHub?')) await signOut(auth) }
 
-  const initials   = user.displayName?.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) || '??'
-  const roleStyle  = ROLE_COLORS[role]  || ROLE_COLORS.student
-  const roleLabel  = ROLE_LABELS[role]  || 'Student'
-  const mainNav    = NAV.filter(item => can(role, item.permission))
-  const crNav      = CR_NAV.filter(item => can(role, item.permission))
-  const adminNav   = ADMIN_NAV.filter(item => can(role, item.permission))
+  const setPage = (p) => { setActivePage(p); setSideOpen(false) }
+  const handleLogout = async () => {
+    if (confirm('Sign out of EduHub?')) await signOut(auth)
+  }
+
+  const initials  = user.displayName?.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) || '??'
+  const roleStyle = ROLE_COLORS[role]  || ROLE_COLORS.student
+  const roleLabel = ROLE_LABELS[role]  || 'Student'
+  const roleIcon  = ROLE_ICONS[role]   || '📖'
+
+  const mainNav  = NAV.filter(item => can(role, item.permission))
+  const crNav    = CR_NAV.filter(item => can(role, item.permission))
+  const adminNav = ADMIN_NAV.filter(item => can(role, item.permission))
 
   return (
     <>
@@ -71,7 +76,6 @@ export default function Dashboard({ user, role, userData }) {
         .nav-item.adm-item.active{background:rgba(239,68,68,0.12);color:#f87171}
         .nav-item.adm-item.active::before{background:#ef4444}
         .nav-icon{font-size:16px;flex-shrink:0}
-        .soon-badge{margin-left:auto;font-family:'DM Mono',monospace;font-size:9px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.25);padding:2px 7px;border-radius:100px}
         .sidebar-bottom{margin-top:auto;padding:16px 10px 0;border-top:1px solid rgba(255,255,255,0.05)}
         .user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;margin-bottom:8px}
         .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;flex-shrink:0;overflow:hidden}
@@ -104,56 +108,68 @@ export default function Dashboard({ user, role, userData }) {
           <div className="role-banner" style={{ background:roleStyle.bg, border:`1px solid ${roleStyle.border}` }}>
             <div className="role-dot" style={{ background:roleStyle.text }}/>
             <span style={{ color:roleStyle.text, flex:1 }}>{roleLabel}</span>
-            <span style={{ fontSize:'14px' }}>{role==='admin'?'🛡️':role==='cr'?'✏️':'📖'}</span>
+            <span style={{ fontSize:'14px' }}>{roleIcon}</span>
           </div>
 
+          {/* Main nav */}
           <div className="nav-section-label">Menu</div>
           {mainNav.map(item => (
             <button key={item.id} className={`nav-item ${page===item.id?'active':''}`}
-              onClick={()=>!item.soon&&setPage(item.id)} style={{opacity:item.soon?0.5:1}}>
+              onClick={()=>setPage(item.id)}>
               <span className="nav-icon">{item.icon}</span>
               {item.label}
-              {item.soon&&<span className="soon-badge">soon</span>}
             </button>
           ))}
 
-          {crNav.length>0&&<>
+          {/* CR tools */}
+          {crNav.length > 0 && <>
             <div className="nav-section-label" style={{marginTop:'12px'}}>CR Tools</div>
-            {crNav.map(item=>(
-              <button key={item.id} className={`nav-item cr-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
+            {crNav.map(item => (
+              <button key={item.id} className={`nav-item cr-item ${page===item.id?'active':''}`}
+                onClick={()=>setPage(item.id)}>
                 <span className="nav-icon">{item.icon}</span>{item.label}
               </button>
             ))}
           </>}
 
-          {adminNav.length>0&&<>
+          {/* Admin tools */}
+          {adminNav.length > 0 && <>
             <div className="nav-section-label" style={{marginTop:'12px'}}>Admin</div>
-            {adminNav.map(item=>(
-              <button key={item.id} className={`nav-item adm-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
+            {adminNav.map(item => (
+              <button key={item.id} className={`nav-item adm-item ${page===item.id?'active':''}`}
+                onClick={()=>setPage(item.id)}>
                 <span className="nav-icon">{item.icon}</span>{item.label}
               </button>
             ))}
           </>}
 
+          {/* User info */}
           <div className="sidebar-bottom">
             <div className="user-card">
               <div className="avatar">
-                {user.photoURL?<img src={user.photoURL} alt={initials} referrerPolicy="no-referrer"/>:initials}
+                {user.photoURL
+                  ? <img src={user.photoURL} alt={initials} referrerPolicy="no-referrer"/>
+                  : initials}
               </div>
               <div style={{minWidth:0}}>
                 <div className="user-name">{user.displayName}</div>
-                <div style={{fontSize:'11px',marginTop:'2px',color:roleStyle.text,fontFamily:"'DM Mono',monospace"}}>{roleLabel}</div>
+                <div style={{fontSize:'11px',marginTop:'2px',color:roleStyle.text,fontFamily:"'DM Mono',monospace"}}>
+                  {roleLabel}
+                </div>
               </div>
             </div>
             <button className="logout-btn" onClick={handleLogout}>⎋ &nbsp;Sign out</button>
           </div>
         </aside>
 
+        {/* Main content */}
         <main className="main">
           <div className="topbar">
             <button className="hamburger" onClick={()=>setSideOpen(true)}>☰</button>
             <span className="topbar-title">EduHub</span>
-            <div className="topbar-role" style={{background:roleStyle.bg,color:roleStyle.text,border:`1px solid ${roleStyle.border}`}}>{roleLabel}</div>
+            <div className="topbar-role" style={{background:roleStyle.bg,color:roleStyle.text,border:`1px solid ${roleStyle.border}`}}>
+              {roleIcon} {roleLabel}
+            </div>
           </div>
 
           <div className="page-content">

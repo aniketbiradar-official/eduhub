@@ -1,6 +1,6 @@
-import { initializeApp } from "firebase/app"
+import { initializeApp, getApps, getApp } from "firebase/app"
 import { getAuth, GoogleAuthProvider } from "firebase/auth"
-import { getFirestore } from "firebase/firestore"
+import { initializeFirestore, persistentLocalCache } from "firebase/firestore"
 import { getStorage } from "firebase/storage"
 
 const firebaseConfig = {
@@ -12,8 +12,11 @@ const firebaseConfig = {
   appId: "1:419215619223:web:b1b089a5e05a53860ee5d2"
 }
 
-const app = initializeApp(firebaseConfig)
-export const auth     = getAuth(app)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
+
+export const auth    = getAuth(app)
 export const provider = new GoogleAuthProvider()
-export const db       = getFirestore(app)
-export const storage  = getStorage(app)
+export const db      = initializeFirestore(app, {
+  experimentalForceLongPolling: true,
+})
+export const storage = getStorage(app)
