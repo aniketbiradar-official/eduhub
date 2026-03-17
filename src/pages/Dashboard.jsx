@@ -3,18 +3,16 @@ import { signOut } from 'firebase/auth'
 import { auth } from '../firebase'
 import { can, ROLE_LABELS, ROLE_COLORS, ROLE_ICONS } from '../useRole'
 import Home from './Home'
-import Notes from './Notes'
+import FileSystem from './FileSystem'
 import Announcements from './Announcements'
-import Syllabus from './Syllabus'
 import Timetable from './Timetable'
 import CRPanel from './CRPanel'
 import AdminPanel from './AdminPanel'
 
 const NAV = [
   { id: 'home',          icon: '⌂',  label: 'Dashboard',    permission: 'view_dashboard' },
-  { id: 'notes',         icon: '📄', label: 'Notes',         permission: 'view_notes' },
+  { id: 'files',         icon: '📁', label: 'File System',   permission: 'view_notes' },
   { id: 'announcements', icon: '📢', label: 'Announcements', permission: 'view_announcements' },
-  { id: 'syllabus',      icon: '📋', label: 'Syllabus',      permission: 'view_syllabus' },
   { id: 'timetable',     icon: '🗓', label: 'Timetable',     permission: 'view_timetable' },
 ]
 const CR_NAV    = [{ id: 'cr',    icon: '⚙️', label: 'CR Panel',    permission: 'manage_courses' }]
@@ -22,11 +20,11 @@ const ADMIN_NAV = [{ id: 'admin', icon: '🛡️', label: 'Admin Panel',  permis
 
 function AccessDenied() {
   return (
-    <div style={{ display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',textAlign:'center',padding:'40px',animation:'fadeUp 0.4s ease both' }}>
+    <div style={{ display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',textAlign:'center',padding:'40px' }}>
       <div style={{ fontSize:'64px',marginBottom:'16px' }}>🔒</div>
       <h2 style={{ fontFamily:"'Syne',sans-serif",fontSize:'24px',color:'white',marginBottom:'8px' }}>Access Denied</h2>
       <p style={{ color:'rgba(255,255,255,0.35)',fontSize:'14px',maxWidth:'300px' }}>
-        You don't have permission to view this page. Contact your Admin if you think this is a mistake.
+        You don't have permission to view this page.
       </p>
     </div>
   )
@@ -37,9 +35,7 @@ export default function Dashboard({ user, role }) {
   const [sideOpen, setSideOpen] = useState(false)
 
   const setPage = (p) => { setActivePage(p); setSideOpen(false) }
-  const handleLogout = async () => {
-    if (confirm('Sign out of EduHub?')) await signOut(auth)
-  }
+  const handleLogout = async () => { if (confirm('Sign out of EduHub?')) await signOut(auth) }
 
   const initials  = user.displayName?.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) || '??'
   const roleStyle = ROLE_COLORS[role]  || ROLE_COLORS.student
@@ -63,7 +59,6 @@ export default function Dashboard({ user, role }) {
         .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 20px rgba(99,102,241,0.3)}
         .logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:white}
         .role-banner{margin:0 10px 10px;padding:8px 12px;border-radius:10px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500}
-        .role-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
         .nav-section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;color:rgba(255,255,255,0.2);text-transform:uppercase;padding:0 20px;margin-bottom:4px;margin-top:10px}
         .nav-item{display:flex;align-items:center;gap:12px;padding:10px 20px;margin:2px 10px;border-radius:10px;cursor:pointer;transition:all 0.15s;font-size:14px;font-weight:400;color:rgba(255,255,255,0.4);border:none;background:none;width:calc(100% - 20px);text-align:left;position:relative}
         .nav-item:hover{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.8)}
@@ -104,65 +99,51 @@ export default function Dashboard({ user, role }) {
             <span className="logo-text">EduHub</span>
           </div>
 
-          {/* Role badge */}
           <div className="role-banner" style={{ background:roleStyle.bg, border:`1px solid ${roleStyle.border}` }}>
-            <div className="role-dot" style={{ background:roleStyle.text }}/>
+            <div style={{width:'8px',height:'8px',borderRadius:'50%',background:roleStyle.text,flexShrink:0}}/>
             <span style={{ color:roleStyle.text, flex:1 }}>{roleLabel}</span>
             <span style={{ fontSize:'14px' }}>{roleIcon}</span>
           </div>
 
-          {/* Main nav */}
           <div className="nav-section-label">Menu</div>
           {mainNav.map(item => (
-            <button key={item.id} className={`nav-item ${page===item.id?'active':''}`}
-              onClick={()=>setPage(item.id)}>
-              <span className="nav-icon">{item.icon}</span>
-              {item.label}
+            <button key={item.id} className={`nav-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
+              <span className="nav-icon">{item.icon}</span>{item.label}
             </button>
           ))}
 
-          {/* CR tools */}
           {crNav.length > 0 && <>
             <div className="nav-section-label" style={{marginTop:'12px'}}>CR Tools</div>
             {crNav.map(item => (
-              <button key={item.id} className={`nav-item cr-item ${page===item.id?'active':''}`}
-                onClick={()=>setPage(item.id)}>
+              <button key={item.id} className={`nav-item cr-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
                 <span className="nav-icon">{item.icon}</span>{item.label}
               </button>
             ))}
           </>}
 
-          {/* Admin tools */}
           {adminNav.length > 0 && <>
             <div className="nav-section-label" style={{marginTop:'12px'}}>Admin</div>
             {adminNav.map(item => (
-              <button key={item.id} className={`nav-item adm-item ${page===item.id?'active':''}`}
-                onClick={()=>setPage(item.id)}>
+              <button key={item.id} className={`nav-item adm-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
                 <span className="nav-icon">{item.icon}</span>{item.label}
               </button>
             ))}
           </>}
 
-          {/* User info */}
           <div className="sidebar-bottom">
             <div className="user-card">
               <div className="avatar">
-                {user.photoURL
-                  ? <img src={user.photoURL} alt={initials} referrerPolicy="no-referrer"/>
-                  : initials}
+                {user.photoURL ? <img src={user.photoURL} alt={initials} referrerPolicy="no-referrer"/> : initials}
               </div>
               <div style={{minWidth:0}}>
                 <div className="user-name">{user.displayName}</div>
-                <div style={{fontSize:'11px',marginTop:'2px',color:roleStyle.text,fontFamily:"'DM Mono',monospace"}}>
-                  {roleLabel}
-                </div>
+                <div style={{fontSize:'11px',marginTop:'2px',color:roleStyle.text,fontFamily:"'DM Mono',monospace"}}>{roleLabel}</div>
               </div>
             </div>
             <button className="logout-btn" onClick={handleLogout}>⎋ &nbsp;Sign out</button>
           </div>
         </aside>
 
-        {/* Main content */}
         <main className="main">
           <div className="topbar">
             <button className="hamburger" onClick={()=>setSideOpen(true)}>☰</button>
@@ -174,9 +155,8 @@ export default function Dashboard({ user, role }) {
 
           <div className="page-content">
             {page==='home'          && <Home user={user} role={role} setPage={setPage}/>}
-            {page==='notes'         && (can(role,'view_notes')         ? <Notes user={user} role={role}/>         : <AccessDenied/>)}
+            {page==='files'         && (can(role,'view_notes')         ? <FileSystem user={user} role={role}/>     : <AccessDenied/>)}
             {page==='announcements' && (can(role,'view_announcements') ? <Announcements user={user} role={role}/> : <AccessDenied/>)}
-            {page==='syllabus'      && (can(role,'view_syllabus')      ? <Syllabus user={user} role={role}/>      : <AccessDenied/>)}
             {page==='timetable'     && (can(role,'view_timetable')     ? <Timetable user={user} role={role}/>     : <AccessDenied/>)}
             {page==='cr'            && (can(role,'manage_courses')     ? <CRPanel user={user} role={role}/>       : <AccessDenied/>)}
             {page==='admin'         && (can(role,'manage_users')       ? <AdminPanel user={user} role={role}/>    : <AccessDenied/>)}
