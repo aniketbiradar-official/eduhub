@@ -7,8 +7,10 @@ import FileSystem from './FileSystem'
 import Announcements from './Announcements'
 import Timetable from './Timetable'
 import Planner from './Planner'
-import CRPanel from './CRPanel'
 import AdminPanel from './AdminPanel'
+
+// CR Panel is removed — course/semester/subject management is now
+// built directly into the File System for a smoother experience.
 
 const NAV = [
   { id: 'home',          icon: '⌂',  label: 'Dashboard',    permission: 'view_dashboard' },
@@ -17,8 +19,7 @@ const NAV = [
   { id: 'timetable',     icon: '🗓', label: 'Timetable',     permission: 'view_timetable' },
   { id: 'planner',       icon: '🗂', label: 'Study Planner', permission: 'view_planner' },
 ]
-const CR_NAV    = [{ id: 'cr',    icon: '⚙️', label: 'CR Panel',    permission: 'manage_courses' }]
-const ADMIN_NAV = [{ id: 'admin', icon: '🛡️', label: 'Admin Panel',  permission: 'manage_users'  }]
+const ADMIN_NAV = [{ id: 'admin', icon: '🛡️', label: 'Admin Panel', permission: 'manage_users' }]
 
 function AccessDenied() {
   return (
@@ -45,7 +46,6 @@ export default function Dashboard({ user, role }) {
   const roleIcon  = ROLE_ICONS[role]   || '📖'
 
   const mainNav  = NAV.filter(item => can(role, item.permission))
-  const crNav    = CR_NAV.filter(item => can(role, item.permission))
   const adminNav = ADMIN_NAV.filter(item => can(role, item.permission))
 
   return (
@@ -66,9 +66,6 @@ export default function Dashboard({ user, role }) {
         .nav-item:hover{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.8)}
         .nav-item.active{background:rgba(99,102,241,0.15);color:#a5b4fc;font-weight:500}
         .nav-item.active::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:3px;background:#6366f1;border-radius:0 3px 3px 0;margin-left:-10px}
-        .nav-item.cr-item:hover{background:rgba(245,158,11,0.08);color:#fbbf24}
-        .nav-item.cr-item.active{background:rgba(245,158,11,0.15);color:#fbbf24}
-        .nav-item.cr-item.active::before{background:#f59e0b}
         .nav-item.adm-item:hover{background:rgba(239,68,68,0.08);color:#f87171}
         .nav-item.adm-item.active{background:rgba(239,68,68,0.12);color:#f87171}
         .nav-item.adm-item.active::before{background:#ef4444}
@@ -90,6 +87,7 @@ export default function Dashboard({ user, role }) {
         @media(max-width:768px){.sidebar-overlay.open{display:block}}
         .page-content{flex:1;padding:32px;overflow-y:auto}
         @media(max-width:768px){.page-content{padding:20px 16px}}
+        .cr-badge{display:inline-block;font-size:9px;background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.25);padding:1px 6px;border-radius:100px;font-family:'DM Mono',monospace;margin-left:6px;vertical-align:middle}
       `}</style>
 
       <div className="dash-root">
@@ -110,18 +108,14 @@ export default function Dashboard({ user, role }) {
           <div className="nav-section-label">Menu</div>
           {mainNav.map(item => (
             <button key={item.id} className={`nav-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
-              <span className="nav-icon">{item.icon}</span>{item.label}
+              <span className="nav-icon">{item.icon}</span>
+              {item.label}
+              {/* Show CR badge on File System for CR/Admin */}
+              {item.id==='files' && (role==='cr'||role==='admin') && (
+                <span className="cr-badge">manage</span>
+              )}
             </button>
           ))}
-
-          {crNav.length > 0 && <>
-            <div className="nav-section-label" style={{marginTop:'12px'}}>CR Tools</div>
-            {crNav.map(item => (
-              <button key={item.id} className={`nav-item cr-item ${page===item.id?'active':''}`} onClick={()=>setPage(item.id)}>
-                <span className="nav-icon">{item.icon}</span>{item.label}
-              </button>
-            ))}
-          </>}
 
           {adminNav.length > 0 && <>
             <div className="nav-section-label" style={{marginTop:'12px'}}>Admin</div>
@@ -161,7 +155,6 @@ export default function Dashboard({ user, role }) {
             {page==='announcements' && (can(role,'view_announcements') ? <Announcements user={user} role={role}/> : <AccessDenied/>)}
             {page==='timetable'     && (can(role,'view_timetable')     ? <Timetable user={user} role={role}/>     : <AccessDenied/>)}
             {page==='planner'       && (can(role,'view_planner')       ? <Planner user={user}/>                   : <AccessDenied/>)}
-            {page==='cr'            && (can(role,'manage_courses')     ? <CRPanel user={user} role={role}/>       : <AccessDenied/>)}
             {page==='admin'         && (can(role,'manage_users')       ? <AdminPanel user={user} role={role}/>    : <AccessDenied/>)}
           </div>
         </main>
